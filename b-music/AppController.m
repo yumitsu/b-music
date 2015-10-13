@@ -599,7 +599,7 @@
     [[self.BottomControls1 viewWithTag:1] setTitle:str];
 
     if (!_scrobbleIndicator && scrobble) {
-        NSLog(@"SCROBBLE REUQUEST");
+        NSLog(@"SCROBBLE REQUEST");
         NSString * title=[_currentTrack objectForKey:@"title"];
         NSString * artist=[_currentTrack objectForKey:@"artist"];
         

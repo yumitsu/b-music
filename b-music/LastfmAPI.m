@@ -84,12 +84,23 @@
     NSError *error;
     NSData *returnedData = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
     
-    id object = [NSJSONSerialization
-                 JSONObjectWithData:returnedData
-                 options:0
-                 error:&error];
-    if (error) { /* JSON was malformed, act appropriately here */ }
-    return object;
+    if ([returnedData length] < 50) {
+        NSLog(@"LastFM: requestApi: malformed response (less than 50bytes)");
+        return NO;
+    } else {
+        id object = [NSJSONSerialization
+                     JSONObjectWithData:returnedData
+                     options:0
+                     error:&error];
+        
+        if (error) {
+            NSLog(@"LastFM: requestApi: malformed response");
+            return NO; /* can I do so? */
+        } else {
+            return object;
+        }
+        
+    }
 }
 
 -(id)track_getInfo:(NSString *) artist
@@ -114,7 +125,12 @@
     id obj=[self track_getInfo:artist track:track];
     id imageObj = [[[obj objectForKey:@"track"] objectForKey:@"album"] objectForKey:@"image"];
     NSString * stringImageURL = [[imageObj objectAtIndex:size]objectForKey:@"#text"];
-    NSLog(@"%@",stringImageURL);
+    if(stringImageURL==NULL){
+        NSLog(@"NoArtistImageFound");
+    }else{
+        NSLog(@"%@",stringImageURL);
+    }
+    
     return [[NSImage alloc] initWithContentsOfURL:[NSURL URLWithString:stringImageURL]];
 }
 
@@ -149,11 +165,17 @@
                       duration:(NSString*)duration {
     
     BOOL nowPlaying = Settings.sharedInstance.settings.nowPlayingTrackLastfm;
-    if(!nowPlaying) return;//Check avalible
+    if(!nowPlaying) {
+        NSLog(@"NowPlaying scrobbling disabled, can't update");
+        return;
+    }//Check avalible
     
     NSString * session = Settings.sharedInstance.settings.sessionLastfm;
     
-    if (!session || session.length==0) return ;
+    if (!session || session.length==0) {
+        NSLog(@"Not authenticated with LastFM, can't update");
+        return;
+    }
     
     NSMutableDictionary *params=[[NSMutableDictionary alloc] init];
     [params setValue:@"track.updateNowPlaying" forKey:@"method"];
@@ -175,11 +197,17 @@
                  track:(NSString *)track{
     
     BOOL scrobble = Settings.sharedInstance.settings.scrobbleTrackLastfm;
-    if(!scrobble) return;//Check avalible
+    if(!scrobble) {
+        NSLog(@"Scrobbling not enabled, can't update");
+        return;
+    }//Check avalible
     
     NSString * session = Settings.sharedInstance.settings.sessionLastfm;
     
-    if (!session || session.length==0) return ;
+    if (!session || session.length==0) {
+        NSLog(@"Not authenticated with LastFM, can't update");
+        return;
+    }
     
     NSMutableDictionary *params=[[NSMutableDictionary alloc] init];
     [params setValue:@"track.scrobble"                             forKey:@"method"];
